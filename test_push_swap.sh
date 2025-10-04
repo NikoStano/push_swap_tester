@@ -3,8 +3,12 @@
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
+YELLOW='\033[0;33m'
 BLUE='\033[0;34m'
+L_RED='\033[1;31m'
+L_GREEN='\033[1;32m'
+L_YELLOW='\033[1;33m'
+L_BLUE='\033[1;34m'
 NC='\033[0m' # No Color
 
 # Counters
@@ -92,9 +96,9 @@ test_sort() {
     fi
 }
 
-echo -e "${BLUE}╔════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║   PUSH_SWAP COMPREHENSIVE TEST SUITE   ║${NC}"
-echo -e "${BLUE}╚════════════════════════════════════════╝${NC}"
+echo -e "${L_BLUE}╔════════════════════════════════════════╗${NC}"
+echo -e "${L_BLUE}║   PUSH_SWAP COMPREHENSIVE TEST SUITE   ║${NC}"
+echo -e "${L_BLUE}╚════════════════════════════════════════╝${NC}"
 echo ""
 
 # Compile
@@ -110,7 +114,7 @@ echo ""
 # ========================================
 # SECTION 1: BASIC TESTS
 # ========================================
-echo -e "${BLUE}[2/6] Basic Tests${NC}"
+echo -e "${L_BLUE}[2/6] Basic Tests${NC}"
 echo "─────────────────────────────────────────"
 
 test_case "No arguments" "success" 
@@ -123,7 +127,7 @@ echo ""
 # ========================================
 # SECTION 2: ERROR HANDLING
 # ========================================
-echo -e "${BLUE}[3/6] Error Handling Tests${NC}"
+echo -e "${L_BLUE}[3/6] Error Handling Tests${NC}"
 echo "─────────────────────────────────────────"
 
 # test_error "Empty string" ""
@@ -144,7 +148,7 @@ echo ""
 # ========================================
 # SECTION 3: EDGE CASES
 # ========================================
-echo -e "${BLUE}[4/6] Edge Cases${NC}"
+echo -e "${L_BLUE}[4/6] Edge Cases${NC}"
 echo "─────────────────────────────────────────"
 
 test_case "INT_MAX" "success" 2147483647
@@ -160,7 +164,7 @@ echo ""
 # ========================================
 # SECTION 4: SORTING CORRECTNESS
 # ========================================
-echo -e "${BLUE}[5/6] Sorting Correctness${NC}"
+echo -e "${L_BLUE}[5/6] Sorting Correctness${NC}"
 echo "─────────────────────────────────────────"
 
 test_sort "Two numbers" "2 1"
@@ -196,11 +200,11 @@ echo ""
 # ========================================
 # SECTION 5: PERFORMANCE TESTS
 # ========================================
-echo -e "${BLUE}[6/6] Performance Tests${NC}"
+echo -e "${L_BLUE}[6/6] Performance Tests${NC}"
 echo "─────────────────────────────────────────"
 
 # 100 numbers test
-echo -e "${BLUE}Testing 100 numbers${NC} (avg of 10 runs) :"
+echo -e "100 numbers (avg of 10 runs) :"
 TOTAL_OPS=0
 for i in {1..10}; do
     NUMS=$(shuf -i 0-999 -n 100 | tr '\n' ' ')
@@ -220,16 +224,8 @@ else
     ((TESTS_FAILED++))
 fi
 
-# Test de stress
-echo -e "${BLUE}Stress Test: 100 numbers${NC} (10 runs) :"
-for i in {1..10}; do
-    ARG=$(shuf -i 0-99 -n 100 | tr '\n' ' ')
-    COUNT=$(./push_swap $ARG | wc -l)
-    echo "Run $i: $COUNT operations"
-done | awk '{sum+=$3; count++} END {print "Average:", sum/count}'
-
 # 500 numbers test
-echo -e "${BLUE}Testing 500 numbers${NC} (avg of 10 runs) :"
+echo -e "500 numbers (avg of 10 runs) :"
 TOTAL_OPS=0
 for i in {1..10}; do
     NUMS=$(shuf -i 0-9999 -n 500 | tr '\n' ' ')
@@ -249,27 +245,33 @@ else
     ((TESTS_FAILED++))
 fi
 
-# Test de stress
-echo -e "${BLUE}Stress Test: 500 numbers${NC} (10 runs) :"
-for i in {1..10}; do
-    ARG=$(shuf -i 0-499 -n 500 | tr '\n' ' ')
-    COUNT=$(./push_swap $ARG | wc -l)
-    echo "Run $i: $COUNT operations"
-done | awk '{sum+=$3; count++} END {print "Average:", sum/count}'
-
 # Large test
-echo -e "${BLUE}Large Test: 500 numbers${NC} (5 runs) :"
-for i in {1..5}; do
-    ARG=$(shuf -i 0-4999 -n 500 | tr '\n' ' ')
-    ./push_swap $ARG | wc -l
-done | awk '{sum+=$1; count++} END {print "Test3 :", sum/count}'
+echo -e "500 numbers (avg of 100 runs) :"
+TOTAL_OPS=0
+for i in {1..100}; do
+    NUMS=$(shuf -i 0-9999 -n 500 | tr '\n' ' ')
+    OPS=$(./push_swap $NUMS 2>/dev/null | wc -l)
+    TOTAL_OPS=$((TOTAL_OPS + OPS))
+done
+AVG_OPS=$((TOTAL_OPS / 100))
+
+if [ $AVG_OPS -lt 5500 ]; then
+    echo -e "${GREEN}✓ EXCELLENT (${AVG_OPS} ops <= 5500)${NC}"
+    ((TESTS_PASSED++))
+elif [ $AVG_OPS -lt 7000 ]; then
+    echo -e "${YELLOW}⚠ GOOD (${AVG_OPS} ops < 7000)${NC}"
+    ((TESTS_PASSED++))
+else
+    echo -e "${RED}✗ POOR (${AVG_OPS} ops ≥ 7000)${NC}"
+    ((TESTS_FAILED++))
+fi
 
 echo ""
 
 # ========================================
 # MEMORY LEAK TEST
 # ========================================
-echo -e "${BLUE}[BONUS] Memory Leak Check${NC}"
+echo -e "${L_BLUE}[BONUS] Memory Leak Check${NC}"
 echo "─────────────────────────────────────────"
 
 echo -n "Checking for memory leaks (100 numbers) ... "
@@ -303,9 +305,9 @@ echo ""
 # ========================================
 # SUMMARY
 # ========================================
-echo -e "${BLUE}╔════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║            TEST SUMMARY                ║${NC}"
-echo -e "${BLUE}╚════════════════════════════════════════╝${NC}"
+echo -e "${L_BLUE}╔════════════════════════════════════════╗${NC}"
+echo -e "${L_BLUE}║            TEST SUMMARY                ║${NC}"
+echo -e "${L_BLUE}╚════════════════════════════════════════╝${NC}"
 echo ""
 echo -e "Total tests: $((TESTS_PASSED + TESTS_FAILED))"
 echo -e "${GREEN}Passed: $TESTS_PASSED${NC}"
@@ -313,13 +315,13 @@ echo -e "${RED}Failed: $TESTS_FAILED${NC}"
 echo ""
 
 if [ $TESTS_FAILED -eq 0 ]; then
-    echo -e "${GREEN}╔════════════════════════════════════════╗${NC}"
-    echo -e "${GREEN}║      🎉 ALL TESTS PASSED! 🎉           ║${NC}"
-    echo -e "${GREEN}╚════════════════════════════════════════╝${NC}"
+    echo -e "${L_GREEN}╔════════════════════════════════════════╗${NC}"
+    echo -e "${L_GREEN}║      🎉 ALL TESTS PASSED! 🎉           ║${NC}"
+    echo -e "${L_GREEN}╚════════════════════════════════════════╝${NC}"
     exit 0
 else
-    echo -e "${RED}╔════════════════════════════════════════╗${NC}"
-    echo -e "${RED}║     ⚠️  SOME TESTS FAILED  ⚠️         ║${NC}"
-    echo -e "${RED}╚════════════════════════════════════════╝${NC}"
+    echo -e "${L_RED}╔════════════════════════════════════════╗${NC}"
+    echo -e "${L_RED}║     ⚠️  SOME TESTS FAILED  ⚠️         ║${NC}"
+    echo -e "${L_RED}╚════════════════════════════════════════╝${NC}"
     exit 1
 fi
