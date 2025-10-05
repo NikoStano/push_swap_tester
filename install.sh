@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SCRIPT_URL="https://raw.githubusercontent.com/NikoStano/push_swap_tester/refs/heads/main/test_push_swap.sh"
+SCRIPT_URL="https://raw.githubusercontent.com/NikoStano/push_swap_tester/refs/heads/main/test_ps.sh"
 NAME="test_ps.sh"
 echo "Téléchargement du script..."
 curl -fsSL "$SCRIPT_URL" -o "$NAME"

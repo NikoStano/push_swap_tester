@@ -68,6 +68,34 @@ test_error() {
     fi
 }
 
+test_error_checker() {
+    local test_name="$1"
+    shift
+    local args="$@"
+    
+    echo -n "Testing ERROR: $test_name ... "
+    
+    # Run with valgrind
+    local output=$(valgrind --leak-check=full --error-exitcode=42 --quiet ./checker $args 2>&1 | grep -v "Error" | grep -v "valgrind")
+    local program_output=$(./checker $args 2>&1)
+    
+    # Check if "Error" is in output
+    if echo "$program_output" | grep -q "Error"; then
+        # Check for leaks
+        if [ -z "$output" ]; then
+            echo -e "${GREEN}✓ PASS (Error + No leaks)${NC}"
+            ((TESTS_PASSED++))
+        else
+            echo -e "${YELLOW}⚠ PARTIAL (Error but leaks detected)${NC}"
+            echo "$output"
+            ((TESTS_FAILED++))
+        fi
+    else
+        echo -e "${RED}✗ FAIL (No Error message)${NC}"
+        ((TESTS_FAILED++))
+    fi
+}
+
 # Test sorting correctness
 test_sort() {
     local test_name="$1"
@@ -97,29 +125,61 @@ test_sort() {
 }
 
 echo -e "${L_BLUE}╔════════════════════════════════════════╗${NC}"
-echo -e "${L_BLUE}║   PUSH_SWAP COMPREHENSIVE TEST SUITE   ║${NC}"
+echo -e "${L_BLUE}║            PUSH_SWAP TESTER            ║${NC}"
 echo -e "${L_BLUE}╚════════════════════════════════════════╝${NC}"
 echo ""
 
 # Compile
-echo -e "${YELLOW}[1/6] Compiling...${NC}"
-make > /dev/null 2>&1
+echo -e "${YELLOW}[1/7] Compiling...${NC}"
+make re > /dev/null 2>&1
 if [ $? -ne 0 ]; then
     echo -e "${RED}✗ Compilation push_swap failed!${NC}"
     exit 1
 fi
 echo -e "${GREEN}✓ Compilation push_swap successful${NC}"
-make bonus > /dev/null 2>&1
-if [ $? -ne 0 ]; then
-    echo -e "${RED}✗ Compilation checker failed!${NC}"
+
+# Backup existing checker if present
+CHECKER_BACKUP=false
+if [ -f "./checker" ]; then
+    mv ./checker ./checker_backup
+    CHECKER_BACKUP=true
 fi
-echo -e "${GREEN}✓ Compilation checker successful${NC}"
+
+make bonus > /dev/null 2>&1
+if [ -f "./checker" ]; then
+    echo -e "${GREEN}✓ Compilation checker successful${NC}"
+    rm -f ./checker_backup
+elif [ "$CHECKER_BACKUP" = true ]; then
+    mv ./checker_backup ./checker
+    echo -e "${YELLOW}⚠ Using existing checker${NC}"
+else
+    echo -e "${RED}✗ No checker available${NC}"
+fi
 echo ""
 
 # ========================================
-# SECTION 1: BASIC TESTS
+# SECTION 1: CHECKER-SPECIFIC ERROR HANDLING
 # ========================================
-echo -e "${L_BLUE}[2/6] Basic Tests${NC}"
+echo -e "${L_BLUE}[2/7] Checker Error Handling Tests${NC}"
+echo "─────────────────────────────────────────"
+
+# Checker specific error tests
+test_error_checker "Checker: Non-numeric" "1 two 3"
+test_error_checker "Checker: Duplicate numbers" "1 2 3 2"
+test_error_checker "Checker: Number too large" "2147483648"
+test_error_checker "Checker: Number too small" "-2147483649"
+test_error_checker "Checker: Invalid format" "1 2 3+"
+test_error_checker "Checker: Just a sign" "+"
+test_error_checker "Checker: Just a minus" "-"
+test_error_checker "Checker: Multiple signs" "++5"
+test_error_checker "Checker: Multiple signs 2" "--5"
+test_error_checker "Checker: Mix valid/invalid" "1 2 abc 3"
+echo ""
+
+# ========================================
+# SECTION 2: BASIC TESTS
+# ========================================
+echo -e "${L_BLUE}[3/7] Basic Tests${NC}"
 echo "─────────────────────────────────────────"
 
 test_case "No arguments" "success" 
@@ -130,12 +190,11 @@ test_case "Single number" "success" 42
 echo ""
 
 # ========================================
-# SECTION 2: ERROR HANDLING
+# SECTION 3: ERROR HANDLING
 # ========================================
-echo -e "${L_BLUE}[3/6] Error Handling Tests${NC}"
+echo -e "${L_BLUE}[4/7] Error Handling Tests${NC}"
 echo "─────────────────────────────────────────"
 
-# test_error "Empty string" ""
 test_error "Non-numeric" "1 two 3"
 test_error "Duplicate numbers" "1 2 3 2"
 test_error "Number too large" "2147483648"
@@ -143,17 +202,15 @@ test_error "Number too small" "-2147483649"
 test_error "Invalid format" "1 2 3+"
 test_error "Just a sign" "+"
 test_error "Just a minus" "-"
-# test_error "Spaces only" "   "
 test_error "Multiple signs" "++5"
 test_error "Multiple signs 2" "--5"
 test_error "Mix valid/invalid" "1 2 abc 3"
-
 echo ""
 
 # ========================================
-# SECTION 3: EDGE CASES
+# SECTION 4: EDGE CASES
 # ========================================
-echo -e "${L_BLUE}[4/6] Edge Cases${NC}"
+echo -e "${L_BLUE}[5/7] Edge Cases${NC}"
 echo "─────────────────────────────────────────"
 
 test_case "INT_MAX" "success" 2147483647
@@ -167,9 +224,9 @@ test_case "Negative with spaces" "success" "-1 -2 -3"
 echo ""
 
 # ========================================
-# SECTION 4: SORTING CORRECTNESS
+# SECTION 5: SORTING CORRECTNESS
 # ========================================
-echo -e "${L_BLUE}[5/6] Sorting Correctness${NC}"
+echo -e "${L_BLUE}[6/7] Sorting Correctness${NC}"
 echo "─────────────────────────────────────────"
 
 test_sort "Two numbers" "2 1"
@@ -203,9 +260,9 @@ fi
 echo ""
 
 # ========================================
-# SECTION 5: PERFORMANCE TESTS
+# SECTION 6: PERFORMANCE TESTS
 # ========================================
-echo -e "${L_BLUE}[6/6] Performance Tests${NC}"
+echo -e "${L_BLUE}[7/7] Performance Tests${NC}"
 echo "─────────────────────────────────────────"
 
 # 100 numbers test
