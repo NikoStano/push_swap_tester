@@ -11,4 +11,4 @@ else
     echo "❌ Erreur : le téléchargement a échoué."
     exit 1
 fi
-$NAME
+./$NAME
