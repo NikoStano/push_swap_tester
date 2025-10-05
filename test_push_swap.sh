@@ -104,10 +104,14 @@ echo ""
 # Compile
 echo -e "${YELLOW}[1/6] Compiling...${NC}"
 make > /dev/null 2>&1
-make bonus > /dev/null 2>&1
 if [ $? -ne 0 ]; then
     echo -e "${RED}✗ Compilation failed!${NC}"
     exit 1
+fi
+echo -e "${GREEN}✓ Compilation successful${NC}"
+make bonus > /dev/null 2>&1
+if [ $? -ne 0 ]; then
+    echo -e "${RED}✗ Compilation failed!${NC}"
 fi
 echo -e "${GREEN}✓ Compilation successful${NC}"
 echo ""
