@@ -105,15 +105,15 @@ echo ""
 echo -e "${YELLOW}[1/6] Compiling...${NC}"
 make > /dev/null 2>&1
 if [ $? -ne 0 ]; then
-    echo -e "${RED}✗ Compilation failed!${NC}"
+    echo -e "${RED}✗ Compilation push_swap failed!${NC}"
     exit 1
 fi
-echo -e "${GREEN}✓ Compilation successful${NC}"
+echo -e "${GREEN}✓ Compilation push_swap successful${NC}"
 make bonus > /dev/null 2>&1
 if [ $? -ne 0 ]; then
-    echo -e "${RED}✗ Compilation failed!${NC}"
+    echo -e "${RED}✗ Compilation checker failed!${NC}"
 fi
-echo -e "${GREEN}✓ Compilation successful${NC}"
+echo -e "${GREEN}✓ Compilation checker successful${NC}"
 echo ""
 
 # ========================================
