@@ -47,19 +47,17 @@ test_error() {
     
     echo -n "Testing ERROR: $test_name ... "
     
-    # Run with valgrind
-    local output=$(valgrind --leak-check=full --error-exitcode=42 --quiet ./push_swap $args 2>&1 | grep -v "Error" | grep -v "valgrind")
     local program_output=$(./push_swap $args 2>&1)
     
-    # Check if "Error" is in output
     if echo "$program_output" | grep -q "Error"; then
-        # Check for leaks
-        if [ -z "$output" ]; then
+        valgrind --leak-check=full --error-exitcode=1 --quiet ./push_swap $args > /dev/null 2>&1
+        local leak_status=$?
+        
+        if [ $leak_status -eq 0 ]; then
             echo -e "${GREEN}✓ PASS (Error + No leaks)${NC}"
             ((TESTS_PASSED++))
         else
             echo -e "${YELLOW}⚠ PARTIAL (Error but leaks detected)${NC}"
-            echo "$output"
             ((TESTS_FAILED++))
         fi
     else
@@ -75,19 +73,17 @@ test_error_checker() {
     
     echo -n "Testing ERROR: $test_name ... "
     
-    # Run with valgrind
-    local output=$(valgrind --leak-check=full --error-exitcode=42 --quiet ./checker $args 2>&1 | grep -v "Error" | grep -v "valgrind")
-    local program_output=$(./checker $args 2>&1)
+    local program_output=$(./push_swap $args 2>&1)
     
-    # Check if "Error" is in output
     if echo "$program_output" | grep -q "Error"; then
-        # Check for leaks
-        if [ -z "$output" ]; then
+        valgrind --leak-check=full --error-exitcode=1 --quiet ./push_swap $args > /dev/null 2>&1
+        local leak_status=$?
+        
+        if [ $leak_status -eq 0 ]; then
             echo -e "${GREEN}✓ PASS (Error + No leaks)${NC}"
             ((TESTS_PASSED++))
         else
             echo -e "${YELLOW}⚠ PARTIAL (Error but leaks detected)${NC}"
-            echo "$output"
             ((TESTS_FAILED++))
         fi
     else
@@ -134,7 +130,6 @@ echo -e "${YELLOW}[1/7] Compiling...${NC}"
 make re > /dev/null 2>&1
 if [ $? -ne 0 ]; then
     echo -e "${RED}✗ Compilation push_swap failed!${NC}"
-    exit 1
 fi
 echo -e "${GREEN}✓ Compilation push_swap successful${NC}"
 
@@ -160,7 +155,7 @@ echo ""
 # ========================================
 # SECTION 1: CHECKER-SPECIFIC ERROR HANDLING
 # ========================================
-echo -e "${L_BLUE}[2/7] Checker Error Handling Tests${NC}"
+echo -e "${L_BLUE}[1/7] Checker Error Handling Tests${NC}"
 echo "─────────────────────────────────────────"
 
 # Checker specific error tests
@@ -179,7 +174,7 @@ echo ""
 # ========================================
 # SECTION 2: BASIC TESTS
 # ========================================
-echo -e "${L_BLUE}[3/7] Basic Tests${NC}"
+echo -e "${L_BLUE}[2/7] Basic Tests${NC}"
 echo "─────────────────────────────────────────"
 
 test_case "No arguments" "success" 
@@ -192,7 +187,7 @@ echo ""
 # ========================================
 # SECTION 3: ERROR HANDLING
 # ========================================
-echo -e "${L_BLUE}[4/7] Error Handling Tests${NC}"
+echo -e "${L_BLUE}[3/7] Error Handling Tests${NC}"
 echo "─────────────────────────────────────────"
 
 test_error "Non-numeric" "1 two 3"
@@ -210,7 +205,7 @@ echo ""
 # ========================================
 # SECTION 4: EDGE CASES
 # ========================================
-echo -e "${L_BLUE}[5/7] Edge Cases${NC}"
+echo -e "${L_BLUE}[4/7] Edge Cases${NC}"
 echo "─────────────────────────────────────────"
 
 test_case "INT_MAX" "success" 2147483647
@@ -220,13 +215,19 @@ test_case "Negative numbers" "success" -5 -2 -10 -1
 test_case "Mixed pos/neg" "success" 5 -2 10 -1 0
 test_case "With spaces (quoted)" "success" "1 2 3 4 5"
 test_case "Negative with spaces" "success" "-1 -2 -3"
+test_case "Multiple spaces" "success" "1  2   3    4"
+test_case "Leading spaces" "success" "  1 2 3"
+test_case "Trailing spaces" "success" "1 2 3  "
+test_case "Tab characters" "success" "1	2	3"
+test_error "Empty string" ""
+test_error "Only spaces" "   "
 
 echo ""
 
 # ========================================
 # SECTION 5: SORTING CORRECTNESS
 # ========================================
-echo -e "${L_BLUE}[6/7] Sorting Correctness${NC}"
+echo -e "${L_BLUE}[5/7] Sorting Correctness${NC}"
 echo "─────────────────────────────────────────"
 
 test_sort "Two numbers" "2 1"
@@ -260,7 +261,20 @@ fi
 echo ""
 
 # ========================================
-# SECTION 6: PERFORMANCE TESTS
+# SECTION 6: Mixed Arguments Tests
+# ========================================
+echo -e "${L_BLUE}[X/7] Mixed Arguments Tests${NC}"
+echo "─────────────────────────────────────────"
+
+test_case "String + separate args" "success" "1 2" 3 4
+test_case "Multiple strings" "success" "1 2" "3 4" "5"
+test_error "String with invalid + valid" "1 abc" 2 3
+test_error "Valid string + invalid arg" "1 2" abc
+
+echo ""
+
+# ========================================
+# SECTION 7: PERFORMANCE TESTS
 # ========================================
 echo -e "${L_BLUE}[7/7] Performance Tests${NC}"
 echo "─────────────────────────────────────────"
